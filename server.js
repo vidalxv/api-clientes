@@ -16,8 +16,18 @@ app.use(express.json())
 app.get('/clientes', async (req, res) => {
   try {
     const clientesRef = firestore.collection('clientes');
-    const snapshot = await clientesRef.get();
-    const clientes = snapshot.docs.map(doc => ({ id: doc.id }));
+    const querySnapshot = await clientesRef.get();
+
+    const clientes = [];
+    querySnapshot.forEach(doc => {
+      const dadosCliente = doc.data();
+      const cliente = {
+        id: doc.id,
+        ...dadosCliente
+      };
+      clientes.push(cliente);
+    });
+
     res.json(clientes);
   } catch (error) {
     console.error("Erro ao buscar clientes:", error);
@@ -25,36 +35,56 @@ app.get('/clientes', async (req, res) => {
   }
 });
 
-
 app.post('/clientes', async (req, res) => {
   try {
     console.log(req.body);
     const novoCliente = req.body;
     const clienteRef = await firestore.collection('clientes').add(novoCliente);
-    res.status(201).json({ id: clienteRef.id });
+
+    const doc = await clienteRef.get();
+    const dadosCliente = doc.data();
+
+    const cliente = {
+      id: doc.id,
+      ...dadosCliente
+    };
+
+    res.status(201).json(cliente);
   } catch (error) {
     console.error("Erro ao criar cliente:", error);
     res.status(500).json({ message: "Erro ao criar cliente" });
   }
 });
 
-app.put('/clientes/:bairros', async (req, res) => {
+
+app.put('/clientes/:id', async (req, res) => {
   try {
-    const bairros = req.params.bairros;
+    const id = req.params.id;
     const novosDadosCliente = req.body;
-    const clienteRef = firestore.collection('clientes').doc(bairros);
+    const clienteRef = firestore.collection('clientes').doc(id);
+
     await clienteRef.update(novosDadosCliente);
-    res.json({ message: 'Cliente atualizado com sucesso' });
+
+    const doc = await clienteRef.get();
+    const dadosCliente = doc.data();
+
+    const cliente = {
+      id: doc.id,
+      ...dadosCliente
+    };
+
+    res.json(cliente);
   } catch (error) {
     console.error("Erro ao atualizar cliente:", error);
     res.status(500).json({ message: "Erro ao atualizar cliente" });
   }
 });
 
-app.delete('/clientes/:bairros', async (req, res) => {
+
+app.delete('/clientes/:clienteId', async (req, res) => {
+  const clienteId = req.params.clienteId;
   try {
-    const bairros = req.params.bairros;
-    const clienteRef = firestore.collection('clientes').doc(bairros);
+    const clienteRef = firestore.collection('clientes').doc(clienteId);
     await clienteRef.delete();
     res.json({ message: 'Cliente excluído com sucesso' });
   } catch (error) {
@@ -62,6 +92,7 @@ app.delete('/clientes/:bairros', async (req, res) => {
     res.status(500).json({ message: "Erro ao excluir cliente" });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
