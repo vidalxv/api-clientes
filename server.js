@@ -6,6 +6,13 @@ const port = 3000;
 
 const serviceAccount = require("./serviceAccountKey.json");
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://dashboard-4c17a-default-rtdb.firebaseio.com"
